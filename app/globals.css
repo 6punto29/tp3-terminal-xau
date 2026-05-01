@@ -1,0 +1,30 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   app/globals.css
+   Global resets and token overrides.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin:  0;
+  padding: 0;
+}
+
+html, body {
+  background:   #0B0D11;
+  color:        #E2E8F4;
+  font-family:  var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size:    13px;
+  line-height:  1.5;
+  overflow-x:   hidden;
+}
+
+/* Thin scrollbars everywhere */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #2A3050; border-radius: 4px; }
+
+/* Make all inputs/selects/buttons inherit the font */
+input, select, textarea, button { font-family: inherit; }
+
+/* Remove tap highlight on mobile */
+* { -webkit-tap-highlight-color: transparent; }
