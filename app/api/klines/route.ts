@@ -29,9 +29,7 @@ export async function GET(req: NextRequest) {
   if (endTime) params.set("endTime", endTime);
 
   try {
-    const upstream = await fetch(`${BINANCE}?${params}`, {
-      next: { revalidate: 30 },
-    });
+    const upstream = await fetch(`${BINANCE}?${params}`);
 
     if (!upstream.ok)
       return NextResponse.json(
