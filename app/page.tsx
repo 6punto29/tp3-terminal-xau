@@ -1,11 +1,10 @@
+"use client";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // app/page.tsx
 // ─────────────────────────────────────────────────────────────────────────────
-
 import dynamic from "next/dynamic";
 
-// ssr: false → LiveTerminal solo corre en el browser.
-// Esto elimina el hydration error y permite que el WebSocket conecte.
 const LiveTerminal = dynamic(
   () => import("@/components/LiveTerminal"),
   {
