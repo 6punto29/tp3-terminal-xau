@@ -1,6 +1,8 @@
 // lib/ws/binance-ws.ts
-// Precio en vivo: Binance SPOT WebSocket (stream.binance.com:9443)
-// Señales MTF:    Binance FUTURES REST (fapi.binance.com) — en LiveTerminal.tsx
+// Precio en vivo: TwelveData WebSocket — XAU/USD tick a tick
+// Señales MTF:    Binance Futures REST — en LiveTerminal.tsx
+// La API key de TwelveData va en Vercel → Settings → Environment Variables
+// TWELVEDATA_API_KEY = tu_key
 
 "use client";
 
@@ -13,7 +15,9 @@ export interface LivePrice {
   lastUpdate: number;
 }
 
-const WS_URL = "wss://stream.binance.com:9443/ws/xauusdt@kline_1m";
+// API key inyectada desde variable de entorno de Next.js (público — solo lectura de precios)
+const TD_KEY = process.env.NEXT_PUBLIC_TWELVEDATA_API_KEY ?? "";
+const WS_URL = `wss://ws.twelvedata.com/v1/quotes/price?apikey=${TD_KEY}`;
 const RECONNECT_DELAY_MS = 3_000;
 
 export function useBinanceWS(
@@ -31,11 +35,17 @@ export function useBinanceWS(
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
+
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {
       if (!mountedRef.current) return;
+      // Suscribirse a XAU/USD
+      ws.send(JSON.stringify({
+        action: "subscribe",
+        params: { symbols: "XAU/USD" },
+      }));
       setData((prev) => ({ ...prev, connected: true }));
     };
 
@@ -43,25 +53,27 @@ export function useBinanceWS(
       if (!mountedRef.current) return;
       try {
         const msg = JSON.parse(event.data as string);
-        const k = msg.k;
-        if (!k) return;
 
-        const close = parseFloat(k.c);
-        const open  = parseFloat(k.o);
+        // Ignorar eventos que no son precio
+        if (msg.event !== "price") return;
+        if (!msg.price) return;
 
-        if (openPrice.current === 0) openPrice.current = open;
+        const price = parseFloat(msg.price);
+        if (!price || price <= 0) return;
+
+        // Primer precio como referencia de sesión
+        if (openPrice.current === 0) openPrice.current = price;
 
         const chg = openPrice.current > 0
-          ? ((close - openPrice.current) / openPrice.current) * 100
+          ? ((price - openPrice.current) / openPrice.current) * 100
           : 0;
 
-        setData((prev) => ({
-          ...prev,
-          price:      close,
+        setData({
+          price,
           change24h:  chg,
           connected:  true,
           lastUpdate: Date.now(),
-        }));
+        });
       } catch {
         // skip malformed
       }
