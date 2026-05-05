@@ -1,14 +1,7 @@
 "use client";
-// app/login/page.tsx
-
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabaseBrowser } from "@/lib/db/supabase-client";
 
 const MONO = "'JetBrains Mono','Fira Code',monospace";
 const SANS = "'Inter',-apple-system,sans-serif";
@@ -22,7 +15,7 @@ export default function LoginPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabaseBrowser.auth.getSession().then(({ data }) => {
       if (data.session) router.replace("/");
       else setChecking(false);
     });
@@ -30,15 +23,10 @@ export default function LoginPage() {
 
   const login = async () => {
     if (!email || !password) return;
-    setLoading(true);
-    setError("");
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) {
-      setError("Credenciales incorrectas");
-      setLoading(false);
-    } else {
-      router.replace("/");
-    }
+    setLoading(true); setError("");
+    const { error: err } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+    if (err) { setError("Credenciales incorrectas"); setLoading(false); }
+    else router.replace("/");
   };
 
   const onKey = (e: React.KeyboardEvent) => { if (e.key === "Enter") login(); };
