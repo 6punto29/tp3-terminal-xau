@@ -8,20 +8,30 @@
 
 import React from "react";
 
-// ── Design tokens (single source of truth) ───────────────────────────────────
+// ── Design tokens — CSS variables (tema dark/light via globals.css) ──────────
 export const T = {
-  bg:     "#0B0D11", s1: "#131620", s2: "#1A1E2E", s3: "#232840", s4: "#2A3050",
-  border: "rgba(255,255,255,0.06)", border2: "rgba(255,255,255,0.12)",
-  up:     "#00C896", down: "#FF3B5C", wait: "#FFB340",
-  accent: "#3D8EFF", gold: "#D4AF37",
-  text:   "#E2E8F4", muted: "#5A6478", dim: "#3A4260",
-  upBg:     "rgba(0,200,150,0.08)",
-  dnBg:     "rgba(255,59,92,0.08)",
-  upBorder: "rgba(0,200,150,0.20)",
-  dnBorder: "rgba(255,59,92,0.18)",
-  warnBg:     "rgba(255,179,64,0.08)",
-  warnBorder: "rgba(255,179,64,0.20)",
-} as const;
+  bg:         "var(--tp3-bg)",
+  s1:         "var(--tp3-s1)",
+  s2:         "var(--tp3-s2)",
+  s3:         "var(--tp3-s3)",
+  s4:         "var(--tp3-s4)",
+  border:     "var(--tp3-border)",
+  border2:    "var(--tp3-border2)",
+  text:       "var(--tp3-text)",
+  muted:      "var(--tp3-muted)",
+  dim:        "var(--tp3-dim)",
+  up:         "var(--tp3-up)",
+  down:       "var(--tp3-down)",
+  wait:       "var(--tp3-wait)",
+  accent:     "var(--tp3-accent)",
+  gold:       "var(--tp3-gold)",
+  upBg:       "var(--tp3-upBg)",
+  dnBg:       "var(--tp3-dnBg)",
+  upBorder:   "var(--tp3-upBorder)",
+  dnBorder:   "var(--tp3-dnBorder)",
+  warnBg:     "var(--tp3-warnBg)",
+  warnBorder: "var(--tp3-warnBorder)",
+};
 
 export const MONO = "'JetBrains Mono','Fira Code',monospace";
 export const SANS = "'Inter',-apple-system,sans-serif";
@@ -67,9 +77,9 @@ export const SelBtn = ({
     <button onClick={onClick} style={{
       fontFamily: SANS, fontSize: 9, fontWeight: 700,
       padding: "3px 10px", borderRadius: 20, cursor: "pointer",
-      border: `1px solid ${active ? ac : T.border2}`,
-      background: active ? (accentColor ? `${ac}22` : ac) : T.s2,
-      color:  active ? ac : T.muted,
+      border:      `1px solid ${active ? ac : T.border2}`,
+      background:  active ? `${ac}22` : T.s2,   // siempre semi-transparente en activo
+      color:       active ? ac : T.muted,         // texto legible sobre fondo transparente
       transition: "all .15s",
       ...style,
     }}>{children}</button>
