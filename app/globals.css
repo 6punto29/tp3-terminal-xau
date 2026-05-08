@@ -1,0 +1,65 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   app/globals.css
+   Global resets and token overrides.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Theme variables ─────────────────────────────────────────────────────────*/
+
+/* Valores por defecto — funcionan antes de que JS defina data-theme */
+:root {
+  --tp3-bg:#F0F2F6;--tp3-s1:#FFFFFF;--tp3-s2:#F5F7FA;--tp3-s3:#EBEEF4;--tp3-s4:#DDE1EC;
+  --tp3-border:rgba(0,0,0,0.07);--tp3-border2:rgba(0,0,0,0.14);
+  --tp3-text:#111827;--tp3-muted:#6B7280;--tp3-dim:#D1D5DB;
+  --tp3-up:#059669;--tp3-down:#DC2626;--tp3-wait:#D97706;
+  --tp3-accent:#2563EB;--tp3-gold:#B45309;
+  --tp3-upBg:rgba(5,150,105,0.08);--tp3-dnBg:rgba(220,38,38,0.08);
+  --tp3-upBorder:rgba(5,150,105,0.25);--tp3-dnBorder:rgba(220,38,38,0.22);
+  --tp3-warnBg:rgba(217,119,6,0.08);--tp3-warnBorder:rgba(217,119,6,0.25);
+}
+
+html[data-theme="dark"] {
+  --tp3-bg:#0B0D11;--tp3-s1:#131620;--tp3-s2:#1A1E2E;--tp3-s3:#232840;--tp3-s4:#2A3050;
+  --tp3-border:rgba(255,255,255,0.06);--tp3-border2:rgba(255,255,255,0.12);
+  --tp3-text:#E2E8F4;--tp3-muted:#5A6478;--tp3-dim:#3A4260;
+  --tp3-up:#00C896;--tp3-down:#FF3B5C;--tp3-wait:#FFB340;
+  --tp3-accent:#3D8EFF;--tp3-gold:#D4AF37;
+  --tp3-upBg:rgba(0,200,150,0.08);--tp3-dnBg:rgba(255,59,92,0.08);
+  --tp3-upBorder:rgba(0,200,150,0.20);--tp3-dnBorder:rgba(255,59,92,0.18);
+  --tp3-warnBg:rgba(255,179,64,0.08);--tp3-warnBorder:rgba(255,179,64,0.20);
+}
+html[data-theme="light"] {
+  --tp3-bg:#F0F2F6;--tp3-s1:#FFFFFF;--tp3-s2:#F5F7FA;--tp3-s3:#EBEEF4;--tp3-s4:#DDE1EC;
+  --tp3-border:rgba(0,0,0,0.07);--tp3-border2:rgba(0,0,0,0.14);
+  --tp3-text:#111827;--tp3-muted:#6B7280;--tp3-dim:#D1D5DB;
+  --tp3-up:#059669;--tp3-down:#DC2626;--tp3-wait:#D97706;
+  --tp3-accent:#2563EB;--tp3-gold:#B45309;
+  --tp3-upBg:rgba(5,150,105,0.08);--tp3-dnBg:rgba(220,38,38,0.08);
+  --tp3-upBorder:rgba(5,150,105,0.25);--tp3-dnBorder:rgba(220,38,38,0.22);
+  --tp3-warnBg:rgba(217,119,6,0.08);--tp3-warnBorder:rgba(217,119,6,0.25);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin:  0;
+  padding: 0;
+}
+
+html, body {
+  background:   var(--tp3-bg, #0B0D11);
+  color:        var(--tp3-text, #E2E8F4);
+  font-family:  var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size:    13px;
+  line-height:  1.5;
+  overflow-x:   hidden;
+}
+
+/* Thin scrollbars everywhere */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--tp3-dim); border-radius: 4px; }
+
+/* Make all inputs/selects/buttons inherit the font */
+input, select, textarea, button { font-family: inherit; }
+
+/* Remove tap highlight on mobile */
+* { -webkit-tap-highlight-color: transparent; }
