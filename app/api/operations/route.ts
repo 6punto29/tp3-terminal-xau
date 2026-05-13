@@ -72,6 +72,7 @@ export async function PATCH(req: NextRequest) {
   if (body.precio_entrada !== undefined) updates.precio_entrada = body.precio_entrada;
   if (body.sl           !== undefined) updates.sl           = body.sl;
   if (body.tp           !== undefined) updates.tp           = body.tp;
+  if (body.lotaje       !== undefined) updates.lotaje       = body.lotaje;
   if (body.resultado    !== undefined) updates.resultado    = body.resultado;
   if (body.pnl          !== undefined) updates.pnl          = body.pnl;
 
