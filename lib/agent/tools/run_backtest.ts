@@ -52,9 +52,11 @@ export const runBacktestTool: AgentTool<BacktestConfig, BacktestResult | { error
       const htfInd = precompute(htfC);
       const mtfInd = precompute(mtfC);
       const signals = detectSignals(htfC, mtfC, htfInd, mtfInd, {
-        holdCandles: cfg.hold,
-        sessionFilter: cfg.sessionFilter ?? false,
-        ema200Filter:  cfg.ema200Filter  ?? false,
+        holdCandles:     cfg.hold,
+        sessionFilter:   cfg.sessionFilter ?? false,
+        ema200Filter:    cfg.ema200Filter  ?? false,
+        structureFilter: cfg.structureFilter ?? false,
+        spread:          cfg.spread ?? 0,
       });
       const trades  = simulateSignals(signals, cfg.slPct, cfg.tpPct, cfg.hold);
       const summary = summarize(trades);
