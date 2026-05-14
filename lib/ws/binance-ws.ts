@@ -35,6 +35,13 @@ export function useBinanceWS(
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
+    
+    // Si no hay API key, no intentar conectar — evita loop infinito
+    if (!TD_KEY || TD_KEY.trim() === "") {
+      console.warn("[TwelveData] API key no configurada — WS desactivado");
+      setData((prev) => ({ ...prev, connected: false }));
+      return;
+    }
 
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
@@ -84,7 +91,10 @@ export function useBinanceWS(
     ws.onclose = () => {
       if (!mountedRef.current) return;
       setData((prev) => ({ ...prev, connected: false }));
-      timerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+      // Solo reconectar si hay API key configurada
+      if (TD_KEY && TD_KEY.trim() !== "") {
+        timerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+      }
     };
   }, []);
 
