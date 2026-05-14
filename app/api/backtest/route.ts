@@ -90,9 +90,17 @@ export async function POST(req: NextRequest) {
     const rr      = cfg.tpPct / cfg.slPct;
     const ev      = summary ? calcEV(summary.wr, rr) : 0;
 
+    // Fix #5 (v4): summarize() devuelve null si no hay trades. Antes hacíamos
+    // { ...summary!, rr, ev } y el spread sobre null generaba un objeto sin
+    // total/wr/pnl/avgW/avgL → crash en consumer al llamar .toFixed() sobre undefined.
+    // Ahora rellenamos con ceros explícitos cuando no hubo señales.
+    const safeSummary = summary
+      ? { ...summary, rr, ev }
+      : { total: 0, wins: 0, wr: 0, pnl: 0, avgW: 0, avgL: 0, rr, ev };
+
     const result: BacktestResult = {
       config:  cfg,
-      summary: { ...summary!, rr, ev },
+      summary: safeSummary,
       trades:  trades.slice(-50),   // last 50 for the log
       htfLen:  htfCandles.length,
       label:   `${cfg.htf.toUpperCase()}+${cfg.mtf.toUpperCase()} H${cfg.hold}`,
