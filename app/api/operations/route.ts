@@ -5,19 +5,41 @@
 // PATCH  /api/operations        — update result (TP/SL/MANUAL) o edición completa
 // DELETE /api/operations?id=X   — eliminar operación
 //
+// Cambios v4:
+// · Fix #1 — Auth real con JWT de Supabase. Reemplaza el header `x-user-id`
+//   (spoofeable) por validación del access_token que firma Supabase. Cada ruta
+//   llama a getUserIdFromRequest() que verifica el token contra Supabase y
+//   devuelve el user_id real, o 401 si el token es inválido/falta.
+//
 // Cambios v3:
-// · Bug 5.2 — POST acepta y guarda `capital_momento` (capital de cuenta al
-//   abrir la op). PATCH permite actualizarlo si el cliente lo envía.
+// · Bug 5.2 — POST acepta y guarda `capital_momento`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, OperationRow } from "@/lib/db/supabase";
 
-// ── GET — fetch all ops for a user ───────────────────────────────────────────
+// ── Auth helper ───────────────────────────────────────────────────────────────
+/**
+ * Extrae y verifica el JWT del header Authorization: Bearer <token>.
+ * Retorna el user_id real si el token es válido, null si no.
+ * El token lo firma Supabase con su secreto — no se puede falsificar.
+ */
+async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
+  const auth = req.headers.get("authorization");
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  const token = auth.slice(7).trim();
+  if (!token) return null;
+
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
+}
+
+// ── GET — fetch all ops for the authenticated user ───────────────────────────
 export async function GET(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  const userId = await getUserIdFromRequest(req);
   if (!userId)
-    return NextResponse.json({ error: "Missing x-user-id header" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await supabaseAdmin
     .from("xau_usd")
@@ -33,9 +55,9 @@ export async function GET(req: NextRequest) {
 
 // ── POST — create new operation ───────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  const userId = await getUserIdFromRequest(req);
   if (!userId)
-    return NextResponse.json({ error: "Missing x-user-id header" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json() as Omit<
     OperationRow,
@@ -45,7 +67,6 @@ export async function POST(req: NextRequest) {
   if (!body.precio_entrada || !body.sl || !body.tp || !body.direccion)
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
-  // capital_momento: si el cliente no lo envía, queda null (ops viejas o sin capital configurado)
   const capitalMomento =
     typeof body.capital_momento === "number" && body.capital_momento > 0
       ? body.capital_momento
@@ -75,19 +96,16 @@ export async function POST(req: NextRequest) {
 }
 
 // ── PATCH — edición completa o solo resultado/pnl ────────────────────────────
-// Si el body incluye precio_entrada → edición completa de todos los campos.
-// Si solo incluye resultado + pnl   → comportamiento original (marcar cierre).
 export async function PATCH(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  const userId = await getUserIdFromRequest(req);
   if (!userId)
-    return NextResponse.json({ error: "Missing x-user-id header" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const { id } = body;
   if (!id)
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  // Construir el objeto de actualización con solo los campos presentes
   const updates: Partial<OperationRow> = {};
   if (body.direccion       !== undefined) updates.direccion       = body.direccion;
   if (body.precio_entrada  !== undefined) updates.precio_entrada  = body.precio_entrada;
@@ -117,9 +135,9 @@ export async function PATCH(req: NextRequest) {
 
 // ── DELETE — eliminar operación ───────────────────────────────────────────────
 export async function DELETE(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  const userId = await getUserIdFromRequest(req);
   if (!userId)
-    return NextResponse.json({ error: "Missing x-user-id header" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
