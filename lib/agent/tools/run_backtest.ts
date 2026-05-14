@@ -2,6 +2,9 @@
 // lib/agent/tools/run_backtest.ts
 // AI agent tool: runs a backtest and returns results.
 // Used by the AI agent in app/api/agent/route.ts.
+//
+// Cambios v4:
+// · Fix #3 — fetchWithTimeout (10s) en las llamadas a Binance.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { precompute }    from "@/lib/engine/indicators";
@@ -9,17 +12,29 @@ import { detectSignals } from "@/lib/engine/signals";
 import { simulateSignals, summarize, calcEV } from "@/lib/engine/simulator";
 import { BacktestConfig, BacktestResult, Candle, AgentTool } from "@/lib/engine/types";
 
+const FETCH_TIMEOUT_MS = 10_000;
+
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Fetch candles — reused from API route logic
 async function fetchCandles(tf: string): Promise<Candle[]> {
   const BINANCE = "https://fapi.binance.com/fapi/v1/klines";
   let all: number[][] = [];
-  const r = await fetch(`${BINANCE}?symbol=XAUUSDT&interval=${tf}&limit=1500`);
+  const r = await fetchWithTimeout(`${BINANCE}?symbol=XAUUSDT&interval=${tf}&limit=1500`);
   const d = await r.json() as number[][];
   if (!Array.isArray(d)) return [];
   all = d;
   for (let p = 0; p < 3; p++) {
     const oldest = all[0][0];
-    const rp = await fetch(`${BINANCE}?symbol=XAUUSDT&interval=${tf}&limit=1500&endTime=${oldest - 1}`);
+    const rp = await fetchWithTimeout(`${BINANCE}?symbol=XAUUSDT&interval=${tf}&limit=1500&endTime=${oldest - 1}`);
     const dp = await rp.json() as number[][];
     if (!Array.isArray(dp) || !dp.length) break;
     all = [...dp, ...all];
