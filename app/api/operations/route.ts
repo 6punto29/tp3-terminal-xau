@@ -4,6 +4,10 @@
 // POST   /api/operations        — create new operation
 // PATCH  /api/operations        — update result (TP/SL/MANUAL) o edición completa
 // DELETE /api/operations?id=X   — eliminar operación
+//
+// Cambios v3:
+// · Bug 5.2 — POST acepta y guarda `capital_momento` (capital de cuenta al
+//   abrir la op). PATCH permite actualizarlo si el cliente lo envía.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from "next/server";
@@ -41,9 +45,26 @@ export async function POST(req: NextRequest) {
   if (!body.precio_entrada || !body.sl || !body.tp || !body.direccion)
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
+  // capital_momento: si el cliente no lo envía, queda null (ops viejas o sin capital configurado)
+  const capitalMomento =
+    typeof body.capital_momento === "number" && body.capital_momento > 0
+      ? body.capital_momento
+      : null;
+
   const { data, error } = await supabaseAdmin
     .from("xau_usd")
-    .insert([{ ...body, user_id: userId, resultado: null, pnl: null }])
+    .insert([{
+      fecha:          body.fecha,
+      direccion:      body.direccion,
+      precio_entrada: body.precio_entrada,
+      sl:             body.sl,
+      tp:             body.tp,
+      lotaje:         body.lotaje ?? null,
+      capital_momento: capitalMomento,
+      user_id:        userId,
+      resultado:      null,
+      pnl:            null,
+    }])
     .select()
     .single();
 
@@ -68,13 +89,14 @@ export async function PATCH(req: NextRequest) {
 
   // Construir el objeto de actualización con solo los campos presentes
   const updates: Partial<OperationRow> = {};
-  if (body.direccion    !== undefined) updates.direccion    = body.direccion;
-  if (body.precio_entrada !== undefined) updates.precio_entrada = body.precio_entrada;
-  if (body.sl           !== undefined) updates.sl           = body.sl;
-  if (body.tp           !== undefined) updates.tp           = body.tp;
-  if (body.lotaje       !== undefined) updates.lotaje       = body.lotaje;
-  if (body.resultado    !== undefined) updates.resultado    = body.resultado;
-  if (body.pnl          !== undefined) updates.pnl          = body.pnl;
+  if (body.direccion       !== undefined) updates.direccion       = body.direccion;
+  if (body.precio_entrada  !== undefined) updates.precio_entrada  = body.precio_entrada;
+  if (body.sl              !== undefined) updates.sl              = body.sl;
+  if (body.tp              !== undefined) updates.tp              = body.tp;
+  if (body.lotaje          !== undefined) updates.lotaje          = body.lotaje;
+  if (body.resultado       !== undefined) updates.resultado       = body.resultado;
+  if (body.pnl             !== undefined) updates.pnl             = body.pnl;
+  if (body.capital_momento !== undefined) updates.capital_momento = body.capital_momento;
 
   if (Object.keys(updates).length === 0)
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
