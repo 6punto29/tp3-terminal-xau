@@ -5,6 +5,10 @@
 // Response: BacktestResult
 //
 // The engine runs server-side. The UI never calls Binance directly in prod.
+//
+// Cambios v4:
+// · Fix #3 — fetchWithTimeout (10s) en las 2 llamadas a Binance. Antes una
+//   request colgada congelaba el backtest indefinidamente.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from "next/server";
@@ -16,11 +20,24 @@ import { BacktestConfig, BacktestResult, Candle } from "@/lib/engine/types";
 
 const BINANCE = "https://fapi.binance.com/fapi/v1/klines";
 const SYMBOL  = "XAUUSDT";
+const FETCH_TIMEOUT_MS = 10_000;  // 10s — Binance suele responder en <500ms
+
+// Wrapper de fetch que aborta si la respuesta tarda más de timeoutMs.
+// Usa AbortController estándar de Web API — soportado en Next.js y browsers.
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function fetchCandles(tf: string): Promise<Candle[]> {
   let all: number[][] = [];
 
-  const r = await fetch(
+  const r = await fetchWithTimeout(
     `${BINANCE}?symbol=${SYMBOL}&interval=${tf}&limit=1500`,
     { next: { revalidate: 60 } }   // cache 60s in Next.js
   );
@@ -30,7 +47,7 @@ async function fetchCandles(tf: string): Promise<Candle[]> {
 
   for (let p = 0; p < 4; p++) {
     const oldest = all[0][0];
-    const rp = await fetch(
+    const rp = await fetchWithTimeout(
       `${BINANCE}?symbol=${SYMBOL}&interval=${tf}&limit=1500&endTime=${oldest - 1}`,
       { next: { revalidate: 60 } }
     );
