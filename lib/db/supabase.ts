@@ -40,5 +40,6 @@ export interface OperationRow {
   resultado:         "TP" | "SL" | "MANUAL" | null;
   pnl:               number | null;   // P&L en dólares reales (no porcentaje)
   capital_momento:   number | null;   // capital de cuenta al abrir la op (null = ops viejas pre-fix)
+  hora_apertura_mt5: string | null;   // hora exacta de apertura en MT5 (opcional, para precisión del timer Hold)
   created_at:        string;
 }
