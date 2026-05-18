@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
       tp:             body.tp,
       lotaje:         body.lotaje ?? null,
       capital_momento: capitalMomento,
+      hora_apertura_mt5: null,  // siempre null al crear; se ajusta después en edición si necesario
       user_id:        userId,
       resultado:      null,
       pnl:            null,
@@ -195,6 +196,7 @@ export async function PATCH(req: NextRequest) {
   if (body.resultado       !== undefined) updates.resultado       = body.resultado;
   if (body.pnl             !== undefined) updates.pnl             = body.pnl;
   if (body.capital_momento !== undefined) updates.capital_momento = body.capital_momento;
+  if (body.hora_apertura_mt5 !== undefined) updates.hora_apertura_mt5 = body.hora_apertura_mt5;
 
   if (Object.keys(updates).length === 0)
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
