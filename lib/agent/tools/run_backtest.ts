@@ -74,6 +74,8 @@ export const runBacktestTool: AgentTool<BacktestConfig, BacktestResult | { error
         spread:          cfg.spread ?? 0,
         slCapPct:        cfg.slPct * 100,
         tpTargetPct:     cfg.tpPct * 100,
+        minRatio:        cfg.minRatio,
+        atrMin:          cfg.atrMin,
       });
       const trades  = simulateSignals(signals, cfg.slPct, cfg.tpPct, cfg.hold);
       const summary = summarize(trades);
