@@ -72,6 +72,8 @@ export const runBacktestTool: AgentTool<BacktestConfig, BacktestResult | { error
         ema200Filter:    cfg.ema200Filter  ?? false,
         structureFilter: cfg.structureFilter ?? false,
         spread:          cfg.spread ?? 0,
+        slCapPct:        cfg.slPct * 100,
+        tpTargetPct:     cfg.tpPct * 100,
       });
       const trades  = simulateSignals(signals, cfg.slPct, cfg.tpPct, cfg.hold);
       const summary = summarize(trades);
