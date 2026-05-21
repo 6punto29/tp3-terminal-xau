@@ -66,10 +66,20 @@ export async function POST(req: NextRequest) {
   try {
     const cfg = (await req.json()) as BacktestConfig;
 
-    const [htfCandles, mtfCandles] = await Promise.all([
+    // CAMBIO Fix #2 (Auditoría 20/05/26):
+    // Fetcheamos también 15m, 5m y 4h para calcular el score completo
+    // (m15Sig, ltfSig, h4Bias). Sin esto el backtest aceptaba señales con
+    // score < umbral que el live habría rechazado.
+    // Si la HTF == "4h", reutilizamos htfCandles como h4Candles (no doble fetch).
+    const needH4 = cfg.htf !== "4h";
+    const [htfCandles, mtfCandles, m15Candles, ltfCandles, h4Extra] = await Promise.all([
       fetchCandles(cfg.htf),
       fetchCandles(cfg.mtf),
+      fetchCandles("15m"),
+      fetchCandles("5m"),
+      needH4 ? fetchCandles("4h") : Promise.resolve([] as Candle[]),
     ]);
+    const h4Candles = cfg.htf === "4h" ? htfCandles : h4Extra;
 
     if (!htfCandles.length)
       return NextResponse.json({ error: "No data from Binance" }, { status: 502 });
@@ -87,6 +97,10 @@ export async function POST(req: NextRequest) {
       tpTargetPct:     cfg.tpPct * 100,
       minRatio:        cfg.minRatio,
       atrMin:          cfg.atrMin,
+    }, {
+      m15Candles,
+      ltfCandles,
+      h4Candles,
     });
 
     const trades  = simulateSignals(signals, cfg.slPct, cfg.tpPct, cfg.hold);
