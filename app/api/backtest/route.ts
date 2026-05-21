@@ -45,7 +45,13 @@ async function fetchCandles(tf: string): Promise<Candle[]> {
   if (!Array.isArray(d) || !d.length) return [];
   all = d;
 
+  // RATE LIMIT FIX (20/05/26): delay 400ms entre páginas para no disparar 418.
+  // Server fra1 generalmente es seguro pero con 5 timeframes serializados,
+  // cada uno paginando 5 veces, suman 25 requests por backtest. Mejor pausar.
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
   for (let p = 0; p < 4; p++) {
+    await delay(400);
     const oldest = all[0][0];
     const rp = await fetchWithTimeout(
       `${BINANCE}?symbol=${SYMBOL}&interval=${tf}&limit=1500&endTime=${oldest - 1}`,
@@ -71,15 +77,23 @@ export async function POST(req: NextRequest) {
     // (m15Sig, ltfSig, h4Bias). Sin esto el backtest aceptaba señales con
     // score < umbral que el live habría rechazado.
     // Si la HTF == "4h", reutilizamos htfCandles como h4Candles (no doble fetch).
-    const needH4 = cfg.htf !== "4h";
-    const [htfCandles, mtfCandles, m15Candles, ltfCandles, h4Extra] = await Promise.all([
-      fetchCandles(cfg.htf),
-      fetchCandles(cfg.mtf),
-      fetchCandles("15m"),
-      fetchCandles("5m"),
-      needH4 ? fetchCandles("4h") : Promise.resolve([] as Candle[]),
-    ]);
-    const h4Candles = cfg.htf === "4h" ? htfCandles : h4Extra;
+    // Si la MTF == "15m", reutilizamos mtfCandles como m15Candles.
+    //
+    // RATE LIMIT FIX (20/05/26):
+    // Fetches en serie (no Promise.all) para no disparar el 418 de Binance.
+    // Vercel fra1 ya está mejor situado pero igual con 5 fetches paralelos x 5
+    // páginas (=25 requests burst) puede ser flagged. Serializado evita el ban.
+    const needH4  = cfg.htf !== "4h";
+    const needM15 = cfg.mtf !== "15m";
+
+    const htfCandles = await fetchCandles(cfg.htf);
+    const mtfCandles = await fetchCandles(cfg.mtf);
+    const m15Extra   = needM15 ? await fetchCandles("15m") : [] as Candle[];
+    const ltfCandles = await fetchCandles("5m");
+    const h4Extra    = needH4  ? await fetchCandles("4h")  : [] as Candle[];
+
+    const m15Candles = cfg.mtf === "15m" ? mtfCandles : m15Extra;
+    const h4Candles  = cfg.htf === "4h"  ? htfCandles : h4Extra;
 
     if (!htfCandles.length)
       return NextResponse.json({ error: "No data from Binance" }, { status: 502 });
