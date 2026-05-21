@@ -102,15 +102,16 @@ export async function POST(req: NextRequest) {
     const mtfInd = precompute(mtfCandles);
 
     const signals = detectSignals(htfCandles, mtfCandles, htfInd, mtfInd, {
-      holdCandles:     cfg.hold,
-      sessionFilter:   cfg.sessionFilter,
-      ema200Filter:    cfg.ema200Filter,
-      structureFilter: cfg.structureFilter ?? false,
-      spread:          cfg.spread ?? 0,
-      slCapPct:        cfg.slPct * 100,
-      tpTargetPct:     cfg.tpPct * 100,
-      minRatio:        cfg.minRatio,
-      atrMin:          cfg.atrMin,
+      holdCandles:      cfg.hold,
+      sessionFilter:    cfg.sessionFilter,
+      ema200Filter:     cfg.ema200Filter,
+      structureFilter:  cfg.structureFilter ?? false,
+      spread:           cfg.spread ?? 0,
+      slCapPct:         cfg.slPct * 100,
+      tpTargetPct:      cfg.tpPct * 100,
+      minRatio:         cfg.minRatio,
+      atrMin:           cfg.atrMin,
+      applyScoreFilter: cfg.applyScoreFilter,   // ← Toggle Score Filter (21/05/26)
     }, {
       m15Candles,
       ltfCandles,
