@@ -376,10 +376,11 @@ export function calcSignalScore(
   return Math.max(0, Math.min(s, 10));
 }
 
-// Umbral dinámico: 6 si HTF+MTF alineados (corazón del setup intacto),
-// 7 si no (más exigente cuando el filtro principal falla).
+// CAMBIO (21/05/26): umbral fijo en 6 (antes dinámico 6/7).
+// El umbral 7 bloqueaba casi todas las señales. Con 6 fijo el sistema
+// vuelve a generar señales como cuando funcionaba correctamente.
 export function getScoreThreshold(htf: SignalDirection, mtf: SignalDirection): number {
-  return (htf !== "WAIT" && htf === mtf) ? 6 : 7;
+  return 6;
 }
 
 // ── Backtest signal loop ───────────────────────────────────────────────────────
