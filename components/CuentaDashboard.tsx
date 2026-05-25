@@ -187,8 +187,7 @@ export default function CuentaDashboard({userId}:{userId:string}){
               fontFamily:SANS,fontSize:10,color:T.muted,textAlign:"left"}}>
             <span style={{color:T.gold,fontWeight:700}}>Reglas</span>
             <span>📊 Máx 2 ops · 🛑 2 SL=cerrar · 💰 1% riesgo · ⏱ LDN/NY · 🎯 Score≥6 · 📰 Sin noticias 30M · ✅ Checklist verde</span>
-            <span style={{marginLeft:"auto",color:T.gold,fontSize:9}}>EV +1.55R · WR 51% · 81 señales</span>
-            <span style={{color:T.muted,fontSize:11,flexShrink:0}}>{reglasOpen?"▲":"▼"}</span>
+            <span style={{color:T.muted,fontSize:11,flexShrink:0,marginLeft:"auto"}}>{reglasOpen?"▲":"▼"}</span>
           </button>
           {reglasOpen&&(
             <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:100,
@@ -201,9 +200,6 @@ export default function CuentaDashboard({userId}:{userId:string}){
                   <span style={{fontFamily:SANS,fontSize:11,color:T.text}}>{txt}</span>
                 </div>
               ))}
-              <div style={{marginTop:6,padding:"4px 6px",fontFamily:SANS,fontSize:10,color:T.gold}}>
-                💡 EV +1.55R con WR 51% sobre 81 señales reales. La disciplina separa el backtest del resultado real.
-              </div>
             </div>
           )}
         </div>
