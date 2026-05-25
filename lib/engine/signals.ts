@@ -537,20 +537,18 @@ export function detectSignals(
     if (mtfIdx < 30) continue;
 
     const mSig = mtfSignalAt(mtfInd, mtfIdx);
-    // Clasificación por fuerza (24/05/26) — reemplaza el viejo "if hSig!==mSig continue".
-    // El filtro anterior descartaba DOS casos distintos a la vez:
-    //   1. HTF y MTF opuestos  → NUNCA es señal válida → se descarta (continue).
-    //   2. HTF activo, MTF WAIT → es una señal MODERADA → ahora SÍ se conserva.
-    // FUERTE = HTF y MTF coinciden. MODERADA = HTF activo, MTF en WAIT.
-    let fuerza: "FUERTE" | "MODERADA";
-    if (hSig === mSig) {
-      fuerza = "FUERTE";
-    } else if (mSig === "WAIT") {
-      fuerza = "MODERADA";
-    } else {
-      // HTF y MTF en direcciones opuestas → no es señal, descartar.
-      continue;
-    }
+    // REVERSIÓN (24/05/26): vuelve a SOLO señales FUERTES (HTF == MTF).
+    // El backtest del 24/05 demostró que aceptar "MTF en WAIT" como MODERADA
+    // genera ruido masivo (1128+ señales, WR ~47%) — no es una señal válida.
+    // "MTF en WAIT" significa ausencia de confirmación, no señal moderada.
+    // Se descarta todo lo que no sea HTF == MTF.
+    //
+    // El campo `fuerza` se MANTIENE (toda señal es FUERTE por ahora) — deja la
+    // infraestructura lista para sumar, en el futuro, señales adicionales de
+    // alta probabilidad definidas y validadas por backtest. NO reactivar el
+    // caso "MTF WAIT" sin un criterio nuevo y un backtest que lo respalde.
+    if (hSig !== mSig) continue;
+    const fuerza: "FUERTE" | "MODERADA" = "FUERTE";
 
     // Filtro ATR mínimo: descartar señales en mercado muerto.
     // Sin filtro (atrMin = 0) → no aplica. Con filtro → ATR de la vela debe ser >= atrMin.
