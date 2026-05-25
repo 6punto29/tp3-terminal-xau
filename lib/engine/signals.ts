@@ -212,27 +212,28 @@ function isInFVG(ind: PrecomputedIndicators, i: number, direction: "UP" | "DOWN"
 // ── HTF signal ────────────────────────────────────────────────────────────────
 
 export function htfSignalAt(ind: PrecomputedIndicators, i: number): HTFResult {
-  const { closes, rsi14, ema12, ema26, ema50, ema200, boll } = ind;
+  // ── CAPA 1 — DIRECCIÓN PURA (25/05/26) ──────────────────────────────────────
+  // Reescrito según el sistema Triple Screen de Alexander Elder: la Capa 1
+  // (dirección) usa SOLO indicadores de tendencia. RSI y Bollinger son
+  // osciladores de REVERSIÓN — no detectan dirección, y en tendencias fuertes
+  // votan en contra de la tendencia real (RSI sobrecompra en una subida sana).
+  // Estaban metidos acá con peso +2, capaces de anular la tendencia y forzar
+  // un WAIT falso. Se RETIRAN de la Capa 1.
+  //   · El RSI NO se pierde: ya trabaja en calcSignalScore (Capa 3 = timing).
+  //   · La Capa 1 queda con 4 votos de TENDENCIA, peso parejo +1:
+  //     MACD (cruce de EMAs), EMA200, EMA50, estructura HH/HL.
+  //   · FVG se mantiene como estaba — un solo cambio a la vez (se evalúa aparte).
+  //   · Umbral ≥2 sin cambios — sigue exigiendo mayoría clara de tendencia.
+  // Pendiente de validación: backtest Capa 1 actual vs limpia, lado a lado.
+  const { closes, ema12, ema26, ema50, ema200 } = ind;
   const price = closes[i];
-  const r     = rsi14[i];
-  const b     = boll[i];
   const macd  = ema12[i] != null && ema26[i] != null ? ema12[i]! - ema26[i]! : null;
   const em200 = ema200[i];
   const em50  = ema50[i];
 
   let up = 0, dn = 0;
 
-  // RSI + Bollinger
-  if (r != null && b) {
-    if      (r < 25 && price < b.l) up += 2;
-    else if (r > 75 && price > b.u) dn += 2;
-    else if (r < 30) up++;
-    else if (r > 70) dn++;
-  } else if (r != null) {
-    r < 30 ? up++ : r > 70 ? dn++ : null;
-  }
-
-  // MACD
+  // MACD — cruce de EMAs, lectura de tendencia
   if (macd != null) macd > 0 ? up++ : dn++;
 
   // EMAs
