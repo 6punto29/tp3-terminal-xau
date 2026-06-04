@@ -14,6 +14,7 @@ import { useBinanceWS } from "@/lib/ws/binance-ws";
 
 type Tab   = "terminal" | "backtest" | "cuenta";
 type Theme = "dark" | "light";
+type NotifPerm = "default" | "granted" | "denied";
 
 const MONO = "'JetBrains Mono','Fira Code',monospace";
 const SANS = "'Inter',-apple-system,sans-serif";
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [tab,    setTab]    = useState<Tab>("terminal");
   const [theme,  setTheme]  = useState<Theme>("dark");
+  const [notifPerm, setNotifPerm] = useState<NotifPerm>("default");
   const ws = useBinanceWS("xauusdt", "1m");
 
   // ── Auth ──
@@ -48,6 +50,29 @@ export default function HomePage() {
     const initial = saved ?? "dark";
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
+  }, []);
+
+  // ── Permiso de notificaciones (state lifted desde LiveTerminal el 04/06/26).
+  //    Razón: el toggle vive ahora en el topbar (toggle global), no en el right panel.
+  //    Acá manejamos el state y la solicitud; la lógica de disparo (transición
+  //    ESPERAR→ENTRAR + cooldown) sigue en LiveTerminal porque depende de signal.
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    setNotifPerm(Notification.permission);
+  }, []);
+
+  const requestNotif = useCallback(async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      alert("Tu navegador no soporta notificaciones");
+      return;
+    }
+    // En estado "denied" el navegador NO muestra el popup. Damos feedback claro.
+    if (Notification.permission === "denied") {
+      alert("Las notificaciones están bloqueadas. Habilitalas desde la configuración del navegador (candado/info de URL → permitir notificaciones).");
+      return;
+    }
+    const result = await Notification.requestPermission();
+    setNotifPerm(result);
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -73,6 +98,13 @@ export default function HomePage() {
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"100vh",
       overflow:"hidden", background:"var(--tp3-bg)", color:"var(--tp3-text)" }}>
+
+      {/* ── ESTILOS GLOBALES — mobile responsive (auditoría 03/06/26) ── */}
+      <style>{`
+        @media (max-width: 700px) {
+          .tp3-mobile-hide { display: none !important; }
+        }
+      `}</style>
 
       {/* ── TOPBAR ── */}
       <div style={{
@@ -118,12 +150,13 @@ export default function HomePage() {
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           {ws.price > 0 && (
             <>
-              <span style={{ fontFamily:MONO, fontSize:13, fontWeight:700,
+              <span className="tp3-mobile-hide" style={{ fontFamily:MONO, fontSize:13, fontWeight:700,
                 color:"var(--tp3-gold)" }}>
                 ${ws.price.toFixed(2)}
               </span>
               {ws.changeSession !== 0 && (
                 <span
+                  className="tp3-mobile-hide"
                   title="Cambio % desde apertura de esta sesión (no 24h reales)"
                   style={{ fontFamily:MONO, fontSize:11,
                     color: ws.changeSession >= 0 ? "var(--tp3-up)" : "var(--tp3-down)" }}
@@ -133,6 +166,25 @@ export default function HomePage() {
               )}
             </>
           )}
+          <button
+            onClick={requestNotif}
+            title={
+              notifPerm==="granted" ? "Alertas activadas — cooldown 90s" :
+              notifPerm==="denied"  ? "Bloqueadas — habilitar desde config del navegador" :
+                                     "Activar alertas de señal"
+            }
+            style={{
+              background: notifPerm==="granted" ? "rgba(0,200,150,0.10)" : "transparent",
+              border: notifPerm==="granted"
+                ? "1px solid rgba(0,200,150,0.45)"
+                : "1px solid var(--tp3-border2)",
+              borderRadius:6, padding:"4px 8px", cursor:"pointer",
+              fontSize:14, lineHeight:1,
+              color: notifPerm==="granted" ? "var(--tp3-up)" : "var(--tp3-down)",
+            }}
+          >
+            {notifPerm==="granted" ? "🔔" : "🔕"}
+          </button>
           <button onClick={toggleTheme} style={{
             background:"transparent", border:"1px solid var(--tp3-border2)",
             borderRadius:6, padding:"4px 8px", cursor:"pointer",
@@ -154,7 +206,7 @@ export default function HomePage() {
       {/* ── CONTENIDO ── */}
       <div style={{ flex:1, overflow:"hidden", minHeight:0, display:"flex", flexDirection:"column" }}>
         {tab === "terminal" && userId &&
-          <LiveTerminal userId={userId} price={ws.price} connected={ws.connected} />}
+          <LiveTerminal userId={userId} price={ws.price} connected={ws.connected} notifPerm={notifPerm} />}
         {tab === "backtest" &&
           <div style={{overflowY:"auto",flex:1}}><BacktestLab /></div>}
         {tab === "cuenta" && userId &&
