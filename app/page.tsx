@@ -29,6 +29,12 @@ export default function HomePage() {
   const [tab,    setTab]    = useState<Tab>("terminal");
   const [theme,  setTheme]  = useState<Theme>("dark");
   const [notifPerm, setNotifPerm] = useState<NotifPerm>("default");
+  // Toggle local de alertas. Default true para que cuando el permiso ya esté granted
+  // el usuario reciba alertas. Si el usuario lo apaga manualmente, queda silenciado
+  // hasta que lo vuelva a prender. Se persiste en localStorage.
+  // Distinto del permiso del navegador: el permiso lo controla el navegador (granted/
+  // denied/default), este boolean lo controla el usuario adentro de la app.
+  const [notifEnabled, setNotifEnabled] = useState<boolean>(true);
   const ws = useBinanceWS("xauusdt", "1m");
 
   // ── Auth ──
@@ -59,6 +65,11 @@ export default function HomePage() {
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     setNotifPerm(Notification.permission);
+    // Cargar preferencia de toggle local (default true).
+    try {
+      const stored = localStorage.getItem("tp3-notif-enabled");
+      if (stored !== null) setNotifEnabled(stored === "true");
+    } catch {}
   }, []);
 
   const requestNotif = useCallback(async () => {
@@ -66,14 +77,27 @@ export default function HomePage() {
       alert("Tu navegador no soporta notificaciones");
       return;
     }
-    // En estado "denied" el navegador NO muestra el popup. Damos feedback claro.
-    if (Notification.permission === "denied") {
-      alert("Las notificaciones están bloqueadas. Habilitalas desde la configuración del navegador (candado/info de URL → permitir notificaciones).");
+    const perm = Notification.permission;
+    // Caso 1: permiso bloqueado a nivel navegador. No se puede activar desde acá.
+    if (perm === "denied") {
+      alert("Las notificaciones están bloqueadas por el navegador. Habilitalas desde la configuración (candado/info de URL → permitir notificaciones).");
       return;
     }
+    // Caso 2: ya está granted → toggle local on/off.
+    if (perm === "granted") {
+      const next = !notifEnabled;
+      setNotifEnabled(next);
+      try { localStorage.setItem("tp3-notif-enabled", String(next)); } catch {}
+      return;
+    }
+    // Caso 3: default → pedir permiso al navegador.
     const result = await Notification.requestPermission();
     setNotifPerm(result);
-  }, []);
+    if (result === "granted") {
+      setNotifEnabled(true);
+      try { localStorage.setItem("tp3-notif-enabled", "true"); } catch {}
+    }
+  }, [notifEnabled]);
 
   const toggleTheme = useCallback(() => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -169,21 +193,29 @@ export default function HomePage() {
           <button
             onClick={requestNotif}
             title={
-              notifPerm==="granted" ? "Alertas activadas — cooldown 90s" :
-              notifPerm==="denied"  ? "Bloqueadas — habilitar desde config del navegador" :
-                                     "Activar alertas de señal"
+              notifPerm==="granted" && notifEnabled
+                ? "Alertas activadas — click para silenciar"
+                : notifPerm==="granted" && !notifEnabled
+                ? "Alertas silenciadas — click para reactivar"
+                : notifPerm==="denied"
+                ? "Bloqueadas — habilitar desde config del navegador"
+                : "Activar alertas de señal"
             }
             style={{
-              background: notifPerm==="granted" ? "rgba(0,200,150,0.10)" : "transparent",
-              border: notifPerm==="granted"
+              background: (notifPerm==="granted" && notifEnabled)
+                ? "rgba(0,200,150,0.10)"
+                : "transparent",
+              border: (notifPerm==="granted" && notifEnabled)
                 ? "1px solid rgba(0,200,150,0.45)"
                 : "1px solid var(--tp3-border2)",
               borderRadius:6, padding:"4px 8px", cursor:"pointer",
               fontSize:14, lineHeight:1,
-              color: notifPerm==="granted" ? "var(--tp3-up)" : "var(--tp3-down)",
+              color: (notifPerm==="granted" && notifEnabled)
+                ? "var(--tp3-up)"
+                : "var(--tp3-down)",
             }}
           >
-            {notifPerm==="granted" ? "🔔" : "🔕"}
+            {(notifPerm==="granted" && notifEnabled) ? "🔔" : "🔕"}
           </button>
           <button onClick={toggleTheme} style={{
             background:"transparent", border:"1px solid var(--tp3-border2)",
@@ -206,7 +238,7 @@ export default function HomePage() {
       {/* ── CONTENIDO ── */}
       <div style={{ flex:1, overflow:"hidden", minHeight:0, display:"flex", flexDirection:"column" }}>
         {tab === "terminal" && userId &&
-          <LiveTerminal userId={userId} price={ws.price} connected={ws.connected} notifPerm={notifPerm} />}
+          <LiveTerminal userId={userId} price={ws.price} connected={ws.connected} notifPerm={notifPerm} notifEnabled={notifEnabled} />}
         {tab === "backtest" &&
           <div style={{overflowY:"auto",flex:1}}><BacktestLab /></div>}
         {tab === "cuenta" && userId &&
