@@ -63,3 +63,11 @@ input, select, textarea, button { font-family: inherit; }
 
 /* Remove tap highlight on mobile */
 * { -webkit-tap-highlight-color: transparent; }
+
+/* ── Mobile responsive helpers ─────────────────────────────────────────────── */
+/* Sub-item B.3 del handoff v13: ocultar precio y %ses en pantallas <700px */
+@media (max-width: 700px) {
+  .tp3-mobile-hide {
+    display: none !important;
+  }
+}
