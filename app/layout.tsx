@@ -42,6 +42,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Sub-item B.6 del handoff v13: habilita env(safe-area-inset-*) en iOS.
+  // Sin esto, env(safe-area-inset-bottom) devuelve 0 y el MobileBottomNav
+  // queda pegado al home indicator del iPhone.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
