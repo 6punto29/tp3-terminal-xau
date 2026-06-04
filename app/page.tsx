@@ -77,7 +77,14 @@ export default function HomePage() {
       {/* ── TOPBAR ── */}
       <div style={{
         display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"0 16px", height:44, flexShrink:0,
+        padding:"0 16px",
+        // Sub-item B.6 del handoff v13: respeta el área superior del notch/Dynamic Island
+        // del iPhone (con viewportFit cover, el viewport se extiende hasta cubrir TODA la
+        // pantalla, así que el topbar quedaría tapado por la hora/batería del sistema).
+        // En desktop env(safe-area-inset-top) es 0, idéntico a hoy.
+        paddingTop:"env(safe-area-inset-top)",
+        height:"calc(44px + env(safe-area-inset-top))",
+        flexShrink:0,
         background:"var(--tp3-s1)", borderBottom:"1px solid var(--tp3-border)",
         zIndex:10,
       }}>
