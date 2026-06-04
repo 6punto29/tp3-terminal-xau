@@ -116,23 +116,26 @@ export default function HomePage() {
 
         {/* Derecha — precio + cambio sesión + botones */}
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-          {ws.price > 0 && (
-            <>
-              <span style={{ fontFamily:MONO, fontSize:13, fontWeight:700,
-                color:"var(--tp3-gold)" }}>
-                ${ws.price.toFixed(2)}
-              </span>
-              {ws.changeSession !== 0 && (
-                <span
-                  title="Cambio % desde apertura de esta sesión (no 24h reales)"
-                  style={{ fontFamily:MONO, fontSize:11,
-                    color: ws.changeSession >= 0 ? "var(--tp3-up)" : "var(--tp3-down)" }}
-                >
-                  {ws.changeSession >= 0 ? "+" : ""}{ws.changeSession.toFixed(2)}% ses
+          {/* Sub-item B.3 del handoff v13: precio y %ses ocultos en mobile (<700px) */}
+          <div className="tp3-mobile-hide" style={{ display:"flex", gap:10, alignItems:"center" }}>
+            {ws.price > 0 && (
+              <>
+                <span style={{ fontFamily:MONO, fontSize:13, fontWeight:700,
+                  color:"var(--tp3-gold)" }}>
+                  ${ws.price.toFixed(2)}
                 </span>
-              )}
-            </>
-          )}
+                {ws.changeSession !== 0 && (
+                  <span
+                    title="Cambio % desde apertura de esta sesión (no 24h reales)"
+                    style={{ fontFamily:MONO, fontSize:11,
+                      color: ws.changeSession >= 0 ? "var(--tp3-up)" : "var(--tp3-down)" }}
+                  >
+                    {ws.changeSession >= 0 ? "+" : ""}{ws.changeSession.toFixed(2)}% ses
+                  </span>
+                )}
+              </>
+            )}
+          </div>
           <button onClick={toggleTheme} style={{
             background:"transparent", border:"1px solid var(--tp3-border2)",
             borderRadius:6, padding:"4px 8px", cursor:"pointer",
