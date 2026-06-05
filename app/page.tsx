@@ -2,7 +2,7 @@
 // app/page.tsx
 //
 // Cambios v3:
-// · Bug 1.5 — campo `change24h` renombrado a `changeSession` en useBinanceWS.
+// · Bug 1.5 — campo `change24h` renombrado a `changeSession` en useTwelveDataWS.
 //   El número mostrado en topbar es % desde apertura de sesión del navegador,
 //   no cambio real de 24h.
 
@@ -10,7 +10,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { supabaseBrowser } from "@/lib/db/supabase-client";
-import { useBinanceWS } from "@/lib/ws/binance-ws";
+import { useTwelveDataWS } from "@/lib/ws/twelvedata-ws";
 
 type Tab   = "terminal" | "backtest" | "cuenta";
 type Theme = "dark" | "light";
@@ -27,7 +27,7 @@ export default function HomePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [tab,    setTab]    = useState<Tab>("terminal");
   const [theme,  setTheme]  = useState<Theme>("dark");
-  const ws = useBinanceWS("xauusdt", "1m");
+  const ws = useTwelveDataWS();
 
   // ── Auth ──
   useEffect(() => {
