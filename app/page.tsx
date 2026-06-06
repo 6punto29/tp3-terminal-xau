@@ -57,6 +57,26 @@ export default function HomePage() {
     localStorage.setItem("tp3-theme", next);
   }, [theme]);
 
+  // ── Notificaciones push (B.9: state liftado desde LiveTerminal a page.tsx) ──
+  // Vive acá para que el toggle 🔔 del topbar (B.10) pueda leerlo. LiveTerminal
+  // sigue consumiendo notifPerm/requestNotif vía props para el banner del
+  // checklist y para el useEffect disparador de notificaciones.
+  const [notifPerm, setNotifPerm] = useState<"default"|"granted"|"denied">("default");
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    setNotifPerm(Notification.permission);
+  }, []);
+
+  const requestNotif = useCallback(async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      alert("Tu navegador no soporta notificaciones");
+      return;
+    }
+    const result = await Notification.requestPermission();
+    setNotifPerm(result);
+  }, []);
+
   const logout = useCallback(async () => {
     await supabaseBrowser.auth.signOut();
     window.location.href = "/login";
@@ -164,7 +184,13 @@ export default function HomePage() {
       {/* ── CONTENIDO ── */}
       <div style={{ flex:1, overflow:"hidden", minHeight:0, display:"flex", flexDirection:"column" }}>
         {tab === "terminal" && userId &&
-          <LiveTerminal userId={userId} price={ws.price} connected={ws.connected} />}
+          <LiveTerminal
+            userId={userId}
+            price={ws.price}
+            connected={ws.connected}
+            notifPerm={notifPerm}
+            requestNotif={requestNotif}
+          />}
         {tab === "backtest" &&
           <div style={{overflowY:"auto",flex:1}}><BacktestLab /></div>}
         {tab === "cuenta" && userId &&
