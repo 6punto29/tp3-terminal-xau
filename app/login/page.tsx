@@ -32,7 +32,7 @@ export default function LoginPage() {
   const onKey = (e: React.KeyboardEvent) => { if (e.key === "Enter") login(); };
 
   if (checking) return (
-    <div style={{ background:"#0B0D11", minHeight:"100vh", display:"flex",
+    <div style={{ background:"#0B0D11", minHeight:"100dvh", display:"flex",
       alignItems:"center", justifyContent:"center",
       fontFamily:MONO, fontSize:12, color:"#5A6478", letterSpacing:2 }}>
       CARGANDO...
@@ -40,7 +40,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div style={{ background:"#0B0D11", minHeight:"100vh", display:"flex",
+    <div style={{ background:"#0B0D11", minHeight:"100dvh", display:"flex",
       alignItems:"center", justifyContent:"center", fontFamily:SANS }}>
       <div style={{ width:340, background:"#131620", borderRadius:12,
         border:"1px solid rgba(255,255,255,0.06)", padding:"32px 28px" }}>
