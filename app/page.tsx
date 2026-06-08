@@ -129,7 +129,26 @@ export default function HomePage() {
   );
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100dvh",
+    // Fix viewport iOS Safari (07/06/26 noche, handoff v18 post-cierre):
+    // ANTES: height:"100dvh" + overflow:"hidden".
+    // PROBLEMA: en Safari iOS la barra de URL solo se ajusta dinámicamente
+    // cuando hay scroll en el documento principal. Como acá el doc está en
+    // overflow:hidden y todo el scroll vive dentro de sub-contenedores
+    // (.tp3-sidebar overflowY:auto), Safari mantenía la barra de URL grande
+    // al primer render y 100dvh se calculaba con viewport reducido. Resultado:
+    // el footer del checklist ("3/6 indicadores · ESPERAR") quedaba fuera del
+    // área visible hasta que el primer touch dentro del sidebar disparaba el
+    // ajuste de barra URL.
+    // FIX: position:"fixed" + inset:0 → el wrapper se ata directamente al
+    // viewport visible que iOS Safari sí ajusta correctamente, sin depender
+    // del scroll del documento. Cadena interna de alturas intacta
+    // (flex:1 → tp3-root height:100% → tp3-sidebar height:100% overflowY:auto).
+    // Auditado: ningún ancestro tiene transform/filter/perspective/will-change,
+    // así que el modal (EditOperationModal, position:fixed inset:0 zIndex:1000)
+    // y el bottom nav (MobileBottomNav, position:fixed bottom:0 zIndex:100)
+    // siguen posicionándose respecto al viewport. Desktop idéntico a antes.
+    <div style={{ display:"flex", flexDirection:"column",
+      position:"fixed", inset:0,
       overflow:"hidden", background:"var(--tp3-bg)", color:"var(--tp3-text)" }}>
 
       {/* ── TOPBAR ── */}
