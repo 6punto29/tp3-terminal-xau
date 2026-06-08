@@ -17,6 +17,13 @@ const SANS = "'Inter',-apple-system,sans-serif";
 // y 80-100% para que el ojo descanse entre movimientos.
 // Implementación: 2 capas radial-gradient + halo teal + 3 animaciones CSS.
 // Sin librerías nuevas, sin canvas, sin JS — todo en GPU compositor.
+//
+// POLISH UI (08/06/26 tarde) — 4 mejoras de detalle:
+//   1. Animación de entrada del card: fade + slide-up 600ms con cubic-bezier.
+//   2. Focus state en inputs: borde + ring teal cuando el campo está activo.
+//   3. Hover state en botón: lift 1px + glow gold suave.
+//   4. Glow tenue del borde del card: box-shadow teal sutil que conecta el
+//      card con los puntos del fondo (sensación de "emanan del card").
 const BG_STYLES = `
 @keyframes tp3WaveA {
   0%        { transform: translate(0, 0); }
@@ -35,6 +42,10 @@ const BG_STYLES = `
 @keyframes tp3HaloBreathe {
   0%, 100% { opacity: 0.85; transform: scale(1); }
   50%      { opacity: 1;    transform: scale(1.05); }
+}
+@keyframes tp3CardEnter {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 .tp3-halo {
   position: absolute; inset: 0; pointer-events: none;
@@ -55,8 +66,29 @@ const BG_STYLES = `
   background-position: 11px 11px;
   animation: tp3WaveB 28s ease-in-out infinite;
 }
+.tp3-card {
+  animation: tp3CardEnter 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.tp3-input {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.tp3-input:focus {
+  border-color: rgba(29, 158, 117, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.12);
+}
+.tp3-btn {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.tp3-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(201, 162, 39, 0.28), 0 0 0 1px rgba(232, 184, 75, 0.3);
+}
+.tp3-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
 @media (prefers-reduced-motion: reduce) {
-  .tp3-halo, .tp3-dots-a, .tp3-dots-b { animation: none; }
+  .tp3-halo, .tp3-dots-a, .tp3-dots-b, .tp3-card { animation: none; }
+  .tp3-input, .tp3-btn { transition: none; }
 }
 `;
 
@@ -101,9 +133,10 @@ export default function LoginPage() {
       <div className="tp3-halo"   aria-hidden="true" />
       <div className="tp3-dots-a" aria-hidden="true" />
       <div className="tp3-dots-b" aria-hidden="true" />
-      <div style={{ width:340, background:"#131620", borderRadius:12,
-        border:"1px solid rgba(255,255,255,0.06)", padding:"32px 28px",
-        position:"relative", zIndex:1 }}>
+      <div className="tp3-card" style={{ width:340, background:"#131620", borderRadius:12,
+        border:"0.5px solid rgba(29, 158, 117, 0.18)",
+        boxShadow:"0 0 40px rgba(29, 158, 117, 0.12), 0 0 80px rgba(29, 158, 117, 0.06)",
+        padding:"32px 28px", position:"relative", zIndex:1 }}>
         <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontFamily:MONO, fontSize:22, fontWeight:700,
             letterSpacing:4, color:"#E2E8F4", marginBottom:6 }}>TP3</div>
@@ -114,7 +147,7 @@ export default function LoginPage() {
             letterSpacing:"0.08em", textTransform:"uppercase",
             color:"#5A6478", marginBottom:5 }}>Email</label>
           <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-            onKeyDown={onKey} placeholder="tu@email.com"
+            onKeyDown={onKey} placeholder="tu@email.com" className="tp3-input"
             style={{ width:"100%", background:"#1A1E2E",
               border:"1px solid rgba(255,255,255,0.12)", borderRadius:6,
               padding:"10px 12px", color:"#E2E8F4", fontFamily:SANS,
@@ -125,7 +158,7 @@ export default function LoginPage() {
             letterSpacing:"0.08em", textTransform:"uppercase",
             color:"#5A6478", marginBottom:5 }}>Contraseña</label>
           <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
-            onKeyDown={onKey} placeholder="••••••••"
+            onKeyDown={onKey} placeholder="••••••••" className="tp3-input"
             style={{ width:"100%", background:"#1A1E2E",
               border:"1px solid rgba(255,255,255,0.12)", borderRadius:6,
               padding:"10px 12px", color:"#E2E8F4", fontFamily:SANS,
@@ -136,7 +169,7 @@ export default function LoginPage() {
             background:"rgba(255,59,92,0.08)", border:"1px solid rgba(255,59,92,0.18)",
             fontFamily:SANS, fontSize:11, color:"#FF3B5C" }}>{error}</div>
         )}
-        <button onClick={login} disabled={loading||!email||!password} style={{
+        <button onClick={login} disabled={loading||!email||!password} className="tp3-btn" style={{
           width:"100%", padding:"11px",
           background:"linear-gradient(135deg,#C9A227,#E8B84B)",
           color:"#1D1D1F", fontFamily:SANS, fontSize:13, fontWeight:700,
