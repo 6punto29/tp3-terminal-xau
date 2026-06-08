@@ -264,3 +264,35 @@ export function EquityCurve({ trades }: { trades: Trade[] }) {
     <canvas ref={ref} style={{ width: "100%", height: "100%", display: "block" }} />
   );
 }
+
+// ── ScrollX ─────────────────────────────────────────────────────────────────
+// Wrapper para tablas que pueden desbordarse en mobile.
+// En desktop (viewport ≥ ancho de la tabla) no se activa; en mobile permite
+// scroll horizontal con sombras laterales que indican dirección del scroll.
+// Técnica: background-attachment local/scroll con linear-gradients (Roma
+// Komarov, CSS-Tricks 2012). Sin JS ni listeners.
+//
+// Movido a components/ui/index.tsx el 08/06/26 para compartirse entre
+// CuentaDashboard y BacktestLaboratory. Antes vivía local en Cuenta.
+export const ScrollX = ({
+  minWidth,
+  children,
+}: { minWidth: number; children: React.ReactNode }) => (
+  <div style={{
+    overflowX: "auto",
+    WebkitOverflowScrolling: "touch",
+    backgroundImage: `
+      linear-gradient(to right, var(--tp3-s1), transparent 24px),
+      linear-gradient(to left,  var(--tp3-s1), transparent 24px),
+      radial-gradient(farthest-side at 0 50%,   rgba(0,0,0,0.35), transparent),
+      radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.35), transparent)
+    `,
+    backgroundRepeat:     "no-repeat",
+    backgroundColor:      "var(--tp3-s1)",
+    backgroundSize:       "40px 100%, 40px 100%, 14px 100%, 14px 100%",
+    backgroundPosition:   "left center, right center, left center, right center",
+    backgroundAttachment: "local, local, scroll, scroll",
+  }}>
+    <div style={{ minWidth }}>{children}</div>
+  </div>
+);
