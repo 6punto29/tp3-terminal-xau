@@ -136,7 +136,7 @@ export default function LoginPage() {
       <div className="tp3-card" style={{ width:340, background:"#131620", borderRadius:12,
         border:"0.5px solid rgba(29, 158, 117, 0.18)",
         boxShadow:"0 0 40px rgba(29, 158, 117, 0.12), 0 0 80px rgba(29, 158, 117, 0.06)",
-        padding:"32px 28px", position:"relative", zIndex:1 }}>
+        padding:"36px 28px 28px", position:"relative", zIndex:1 }}>
         <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontFamily:MONO, fontSize:22, fontWeight:700,
             letterSpacing:4, color:"#E2E8F4", marginBottom:6 }}>TP3</div>
@@ -153,7 +153,7 @@ export default function LoginPage() {
               padding:"10px 12px", color:"#E2E8F4", fontFamily:SANS,
               fontSize:13, outline:"none", boxSizing:"border-box" }}/>
         </div>
-        <div style={{ marginBottom:20 }}>
+        <div style={{ marginBottom:24 }}>
           <label style={{ display:"block", fontSize:9, fontWeight:700,
             letterSpacing:"0.08em", textTransform:"uppercase",
             color:"#5A6478", marginBottom:5 }}>Contraseña</label>
