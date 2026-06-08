@@ -178,10 +178,6 @@ export default function LoginPage() {
           opacity:loading||!email||!password?0.6:1 }}>
           {loading?"Entrando...":"Entrar al Terminal"}
         </button>
-        <div style={{ marginTop:16, textAlign:"center",
-          fontFamily:MONO, fontSize:9, color:"#3A4260" }}>
-          tp3-terminal-xau.vercel.app
-        </div>
       </div>
     </div>
   );
