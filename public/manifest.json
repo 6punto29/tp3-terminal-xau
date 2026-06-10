@@ -1,6 +1,6 @@
 {
   "name": "TP3 XAU/USD Terminal",
-  "short_name": "TP3 XAU/USD",
+  "short_name": "TP3 Signal XAU/USD",
   "description": "Real-time trading terminal for XAU/USD",
   "start_url": "/",
   "display": "standalone",
