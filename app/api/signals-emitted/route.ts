@@ -298,7 +298,20 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // Postgres error_code 23505 = unique_violation. Será disparado por el
+    // UNIQUE INDEX signals_emitted_unique_hour cuando otra instancia o
+    // dispositivo intente insertar una señal en el mismo bucket horario UTC
+    // para el mismo user + direction. El cliente está preparado para tratar
+    // 409 como éxito (no reintentar) — ver pipeline en LiveTerminal.tsx.
+    if ((error as { code?: string }).code === "23505") {
+      return NextResponse.json(
+        { error: "Duplicate signal in this hour bucket" },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json(data, { status: 201 });
 }
