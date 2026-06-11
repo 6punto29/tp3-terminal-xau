@@ -6,7 +6,7 @@
 // PATCH  /api/shadow-trades                  — actualizar status de una row
 //   (lo usa el tracker para WIN / LOSS / EXPIRED)
 //
-// Patrón espejado de /api/operations/route.ts: mismo auth helper, mismas
+// Patrón espejado de /api/signals-emitted/route.ts: mismo auth helper, mismas
 // validaciones, mismo estilo de respuesta. user_id se inyecta desde el JWT
 // (no se confía en el cliente). RLS de la tabla usa auth.uid()::text como
 // default, pero como el API corre con supabaseAdmin (service_role) bypassea
@@ -22,7 +22,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabase";
 
-// ── Auth helper (idéntico a /api/operations) ─────────────────────────────────
+// ── Auth helper (idéntico al de /api/signals-emitted) ───────────────────────
 async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) return null;
