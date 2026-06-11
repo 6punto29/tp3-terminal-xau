@@ -33,7 +33,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabase";
 
-// ── Auth helper (idéntico a /api/operations y /api/shadow-trades) ────────────
+// ── Auth helper (idéntico al de /api/shadow-trades) ─────────────────────────
 async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) return null;
