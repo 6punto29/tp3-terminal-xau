@@ -102,6 +102,9 @@ interface ShadowEventInput {
   atr_at_entry?:   number | null;
   liquidez?:       Liquidez | null;
   d1_bias?:        BiasVal | null;
+  // Snapshot capital + riesgo al momento del evento (Opción B, 10/06/26)
+  capital_at_signal?:   number | null;
+  risk_pct_at_signal?:  number | null;
   profiles:        ShadowTpProfileInput[];   // entre 1 y 4
 }
 
@@ -178,6 +181,16 @@ export async function POST(req: NextRequest) {
   const errAtr = validateNumberOrNull(body.atr_at_entry, "atr_at_entry");
   if (errAtr) return NextResponse.json({ error: errAtr }, { status: 400 });
 
+  // Snapshot capital + riesgo (Opción B, opcionales)
+  if (body.capital_at_signal !== undefined && body.capital_at_signal !== null) {
+    const err = validatePositiveNumber(body.capital_at_signal, "capital_at_signal");
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+  }
+  if (body.risk_pct_at_signal !== undefined && body.risk_pct_at_signal !== null) {
+    const err = validatePositiveNumber(body.risk_pct_at_signal, "risk_pct_at_signal");
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+  }
+
   if (body.liquidez != null && !(VALID_LIQUIDEZ as readonly string[]).includes(body.liquidez)) {
     return NextResponse.json({ error: "liquidez inválida" }, { status: 400 });
   }
@@ -234,6 +247,8 @@ export async function POST(req: NextRequest) {
     atr_at_entry:   body.atr_at_entry ?? null,
     liquidez:       body.liquidez   ?? null,
     d1_bias:        body.d1_bias    ?? null,
+    capital_at_signal:  body.capital_at_signal  ?? null,
+    risk_pct_at_signal: body.risk_pct_at_signal ?? null,
     status:         "OPEN" as StatusVal,
     // result_at, result_price, pnl_* quedan null por default
     // (lo exige el constraint shadow_result_chk para filas OPEN)
