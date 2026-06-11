@@ -254,6 +254,9 @@ export async function POST(req: NextRequest) {
   if (body.risk_pct_at_signal !== undefined && body.risk_pct_at_signal !== null) {
     const err = validatePositiveNumber(body.risk_pct_at_signal, "risk_pct_at_signal");
     if (err) return NextResponse.json({ error: err }, { status: 400 });
+    if (body.risk_pct_at_signal > 100) {
+      return NextResponse.json({ error: "risk_pct_at_signal no puede exceder 100" }, { status: 400 });
+    }
   }
 
   // ── Validación: contexto ──
