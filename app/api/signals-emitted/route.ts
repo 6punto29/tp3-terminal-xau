@@ -142,6 +142,9 @@ interface SignalEmittedInput {
   fvg_active:      boolean;
   structure:       Structure;
   has_news:        boolean;
+  // Snapshot capital + riesgo al momento de emisión (Opción B, 10/06/26)
+  capital_at_signal?:   number | null;
+  risk_pct_at_signal?:  number | null;
 }
 
 // ── GET — listar signals_emitted del usuario ─────────────────────────────────
@@ -243,6 +246,16 @@ export async function POST(req: NextRequest) {
   const errEma = validateNumberOrNull(body.ema200_at, "ema200_at");
   if (errEma) return NextResponse.json({ error: errEma }, { status: 400 });
 
+  // ── Validación: snapshot capital + riesgo (Opción B, opcionales) ──
+  if (body.capital_at_signal !== undefined && body.capital_at_signal !== null) {
+    const err = validatePositiveNumber(body.capital_at_signal, "capital_at_signal");
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+  }
+  if (body.risk_pct_at_signal !== undefined && body.risk_pct_at_signal !== null) {
+    const err = validatePositiveNumber(body.risk_pct_at_signal, "risk_pct_at_signal");
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
+  }
+
   // ── Validación: contexto ──
   if (!body.liquidez || !(VALID_LIQUIDEZ as readonly string[]).includes(body.liquidez)) {
     return NextResponse.json({ error: "liquidez inválida" }, { status: 400 });
@@ -287,6 +300,8 @@ export async function POST(req: NextRequest) {
     fvg_active:     body.fvg_active,
     structure:      body.structure,
     has_news:       body.has_news,
+    capital_at_signal:  body.capital_at_signal  ?? null,
+    risk_pct_at_signal: body.risk_pct_at_signal ?? null,
     status:         "OPEN" as StatusVal,
     // result_*, mae_*, mfe_*, r_multiple, pnl_pct quedan null por default
     // was_taken default false, taken_op_id default null
