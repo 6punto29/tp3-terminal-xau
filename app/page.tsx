@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { supabaseBrowser } from "@/lib/db/supabase-client";
 import { useTwelveDataWS } from "@/lib/ws/twelvedata-ws";
+import { registerServiceWorker, subscribeToPush, sendTestPush } from "@/lib/push/client";
 
 type Tab   = "terminal" | "backtest" | "cuenta";
 type Theme = "dark" | "light";
@@ -114,6 +115,31 @@ export default function HomePage() {
     // granted → silenciador on/off (B.11)
     toggleNotifEnabled();
   }, [notifPerm, requestNotif, toggleNotifEnabled]);
+
+  // ── Web Push (#8 Fase 1) ──────────────────────────────────────────────────
+  // 1. Registra el service worker al montar (idempotente, NO cachea nada).
+  // 2. Cuando el permiso queda "granted", suscribe el navegador al push y guarda
+  //    la suscripción en el backend. Se re-ejecuta si el permiso cambia (p.ej.
+  //    cuando el operador toca la campana y concede el permiso → notifPerm pasa
+  //    a "granted" → este efecto corre y lo suscribe).
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => { registerServiceWorker(); }, []);
+
+  useEffect(() => {
+    if (notifPerm === "granted") subscribeToPush();
+  }, [notifPerm]);
+
+  const handleTestPush = useCallback(async () => {
+    setPushBusy(true);
+    const r = await sendTestPush();
+    setPushBusy(false);
+    if (r.ok) {
+      alert("Push de prueba enviado. Si no llega: verificá que la PWA esté instalada en pantalla de inicio y las notificaciones activas.");
+    } else {
+      alert("No se pudo enviar el push de prueba (" + (r.reason || "error") + ").");
+    }
+  }, []);
 
   const logout = useCallback(async () => {
     await supabaseBrowser.auth.signOut();
@@ -269,6 +295,34 @@ export default function HomePage() {
               </svg>
             )}
           </button>
+          {/* Botón de PRUEBA de push (#8 Fase 1) — solo visible con permiso concedido.
+              Manda un push de prueba a los dispositivos suscritos para validar que
+              el Web Push funciona en este equipo. Mismo estilo que los otros íconos
+              del topbar; color accent (azul) para diferenciarlo de la campana.
+              Es temporal/para testing — se puede reubicar o quitar luego. */}
+          {notifPerm === "granted" && (
+            <button
+              onClick={handleTestPush}
+              disabled={pushBusy}
+              title="Enviar un push de prueba a este dispositivo"
+              aria-label="Probar push"
+              style={{
+                background:"transparent", border:"1px solid var(--tp3-border2)",
+                borderRadius:6, padding:"0 8px", height:28,
+                cursor: pushBusy ? "default" : "pointer",
+                opacity: pushBusy ? 0.5 : 1,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                color:"var(--tp3-accent)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          )}
           {/* Botón Salir — responsive:
               · Desktop (≥701px): muestra texto "Salir" (span con tp3-mobile-hide)
               · Mobile (<700px): muestra SVG logout (span con tp3-desktop-hide)
